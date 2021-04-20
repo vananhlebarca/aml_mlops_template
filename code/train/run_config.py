@@ -27,7 +27,7 @@ def main(workspace):
     # Create a script config
     script_config = ScriptRunConfig(source_directory='code/train',
                                 script='train.py',
-                                arguments = ['--kernel', 'linear', '--penalty', 0.1, '--ds', dataset_ds],
+                                arguments = ['--kernel', 'linear', '--penalty', 0.1, '--ds', dataset_ds.as_named_input('dataset')],
                                 environment=env,
                                 compute_target=compute_name
                                 ) 

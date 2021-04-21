@@ -12,9 +12,9 @@ print("SDK Version:", azureml.core.VERSION)
 
 # COMMAND ----------
 
-subscription_id = "213bd947-0f6f-4418-90ba-65ddc22a594d" #you should be owner or contributor
-resource_group = "ai" #you should be owner or contributor
-workspace_name = "dp100" #your workspace name
+subscription_id = "2f71beb8-0da7-42ec-9bb7-678bf7867567" #you should be owner or contributor
+resource_group = "edadevarmrgp010" #you should be owner or contributor
+workspace_name = "eaadevarmmlnuw2002" #your workspace name
 workspace_region = "West US 2" #your region
 
 # COMMAND ----------
@@ -28,11 +28,14 @@ ws = Workspace(workspace_name = workspace_name,
 # COMMAND ----------
 
 from azureml.core import Experiment, ScriptRunConfig, Environment
+from azureml.pipeline.steps import DatabricksStep
 from azureml.core import Workspace
 from azureml.core import Datastore
 from azureml.train.hyperdrive import GridParameterSampling, choice
 from azureml.train.hyperdrive import HyperDriveConfig, PrimaryMetricGoal
 from azureml.core.conda_dependencies import CondaDependencies
+from azureml.core.compute import ComputeTarget, DatabricksCompute
+import os
 
 # COMMAND ----------
 
@@ -54,16 +57,46 @@ dataset_ds = ws.datasets['wine_dataset']  #or dataset_id = Dataset.get_by_name(w
 
 # COMMAND ----------
 
-# Create a script config
-script_config = ScriptRunConfig(source_directory='./steps',
+
+# Replace with your account info before running.
+ 
+db_compute_name=os.getenv("DATABRICKS_COMPUTE_NAME", "DS_EOA_DEV") # Databricks compute name
+db_resource_group=os.getenv("DATABRICKS_RESOURCE_GROUP", "edadevarmrgp010") # Databricks resource group
+db_workspace_name=os.getenv("DATABRICKS_WORKSPACE_NAME", "eaadevarmmlnuw2002") # Databricks workspace name
+db_access_token=os.getenv("DATABRICKS_ACCESS_TOKEN", "dapi8ab181f979f745cada4d7b4088208de6") # Databricks access token
+ 
+try:
+    databricks_compute = DatabricksCompute(workspace=ws, name=db_compute_name)
+    print('Compute target {} already exists'.format(db_compute_name))
+except ComputeTargetException:
+    print('Compute not found, will use below parameters to attach new one')
+    print('db_compute_name {}'.format(db_compute_name))
+    print('db_resource_group {}'.format(db_resource_group))
+    print('db_workspace_name {}'.format(db_workspace_name))
+    print('db_access_token {}'.format(db_access_token))
+ 
+    config = DatabricksCompute.attach_configuration(
+        resource_group = db_resource_group,
+        workspace_name = db_workspace_name,
+        access_token= db_access_token)
+    databricks_compute=ComputeTarget.attach(ws, db_compute_name, config)
+    databricks_compute.wait_for_completion(True)
+
+# COMMAND ----------
+
+# Create a script config #/dbfs/FileStore/shared_uploads/anle@suncor.com/aml_scripts/train/train.py
+
+script_config = ScriptRunConfig(source_directory='/dbfs/FileStore/shared_uploads/anle@suncor.com/aml_scripts/train/',
                                 script='train.py',
                                 arguments = ['--ds', dataset_ds.as_named_input('dataset')],
                                 environment=env,
-                                compute_target=compute_name) 
+                                #compute_target=compute_name
+                               ) 
+
 
 #hyperparameters 
 param_space = {
-	'--penalty': choice(0.01, 0.1, 1.0),
+	'--penalty': choice(0.01, 1.0),
     '--kernel': choice('linear', 'rbf')
 
 	}

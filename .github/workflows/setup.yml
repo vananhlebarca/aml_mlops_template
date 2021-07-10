@@ -10,8 +10,8 @@ on:
 #   AZURE_RESOURCE_GROUP
 #   STORAGE_ACCOUNT
 env:
-  AZURE_RESOURCE_GROUP: ai #set this to your resource group name
-  STORAGE_ACCOUNT: dp1008621642936 #set this to your storage-account-name
+  AZURE_RESOURCE_GROUP: vananh #set this to your resource group name
+  STORAGE_ACCOUNT: vananh1748037746 #set this to your storage-account-name
 
 jobs:
   access_aml_resources:
